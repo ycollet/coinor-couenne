@@ -39,6 +39,32 @@ add_definitions(-DCBC_BUILD)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in     ${CMAKE_BINARY_DIR}/Cbc/include/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config_cbc.h.in ${CMAKE_BINARY_DIR}/Cbc/include/config_cbc.h)
 
+#
+# pkg-config file generation
+#
+
+set(prefix           "${CMAKE_INSTALL_PREFIX}")
+set(exec_prefix      "\${prefix}")
+set(libdir           "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+set(includedir       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+set(CBCLIB_PCLIBS     "")
+set(CBCLIB_PCREQUIRES "osi-cbc clp cgl osi coinutils")
+set(PACKAGE_VERSION   "${CBC_VERSION}")
+
+configure_file(${Cbc_DIR}/cbc.pc.in ${CMAKE_BINARY_DIR}/Cbc/cbc.pc @ONLY)
+
+set(libdir         "${Cbc_DIR}")
+set(abs_source_dir "${CMAKE_BINARY_DIR}/bin")
+
+configure_file(${Cbc_DIR}/cbc-uninstalled.pc.in ${CMAKE_BINARY_DIR}/Cbc/cbc-uninstalled.pc @ONLY)
+
+install(FILES ${CMAKE_BINARY_DIR}/Cbc/cbc.pc
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkg-config/)
+
+#
+# Build
+#
+
 set(Cbc_SRC_LIST ${Cbc_DIR}/src/Cbc_C_Interface.cpp
                  ${Cbc_DIR}/src/CbcBranchAllDifferent.cpp
                  #${Cbc_DIR}/src/CbcBranchBase.cpp
@@ -1260,7 +1286,7 @@ if (COIN_ENABLE_DOWNLOAD_METIS OR COIN_USE_METIS)
 endif ()  
   
 install(TARGETS cbc
-        DESTINATION bin)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
 
 if (CBC_BUILD_CBC_GENERIC)
   add_executable(cbc-generic ${Cbc_DIR}/src/CbcGenBaB.cpp
@@ -1312,6 +1338,22 @@ if (CBC_BUILD_CBC_GENERIC)
   if (COIN_HAS_GLPK OR COIN_USE_GLPK)
     target_link_libraries(cbc-generic libOsiGlpk glpk)
   endif ()
+  if (COIN_HAS_XPR OR COIN_USE_XPR)
+    target_link_libraries(cbc-generic libOsiXpr xprs)
+  endif ()
+  if (COIN_HAS_GRB OR COIN_USE_GRB)
+    target_link_libraries(cbc-generic libOsiGrb)
+  endif ()
+  if (COIN_HAS_SPX OR COIN_USE_SPX)
+    target_link_libraries(cbc-generic libOsiSpx)
+  endif ()
+  if (COIN_HAS_VOL OR COIN_USE_VOL)
+    target_link_libraries(cbc-generic libOsiVol libVol)
+  endif ()
+  if (COIN_HAS_DYLP OR COIN_USE_DYLP)
+    target_link_libraries(cbc-generic libOsiDylp libDyLP)
+  endif ()
+  
   if (CBC_USE_THREADS OR COINUTILS_USE_THREAD OR COIN_USE_PTHREAD_WIN32 OR COIN_ENABLE_DOWNLOAD_PTHREAD_WIN32 OR COIN_HAS_ABC)
     if (MINGW)
       target_link_libraries(cbc-generic winpthread)
@@ -1342,18 +1384,20 @@ if (CBC_BUILD_CBC_GENERIC)
   endif ()  
   
   install(TARGETS cbc-generic
-          DESTINATION bin)
+          DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
 endif ()
 
 install(TARGETS libCbc 
-        DESTINATION lib)
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/static)
 
 install(FILES ${Cbc_SRC_LIST_Headers} 
-        DESTINATION include/coin)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin)
 
 install(FILES ${CMAKE_BINARY_DIR}/Cbc/include/config_cbc.h
-        DESTINATION include/coin
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin
         RENAME CbcConfig.h)
 
 install(FILES ${CMAKE_BINARY_DIR}/Cbc/include/config_cbc.h
-        DESTINATION include/coin)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin)

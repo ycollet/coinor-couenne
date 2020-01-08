@@ -38,7 +38,40 @@ add_definitions(-DBONMIN_BUILD)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in        ${CMAKE_BINARY_DIR}/Bonmin/include/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config_bonmin.h.in ${CMAKE_BINARY_DIR}/Bonmin/include/config_bonmin.h)
 
-add_definitions(-DCOIN_USE_ASL)
+#
+# pkg-config file generation
+#
+
+set(prefix               "${CMAKE_INSTALL_PREFIX}")
+set(exec_prefix          "\${prefix}")
+set(libdir               "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+set(includedir           "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+set(BONMINLIB_PCLIBS     "")
+set(BONMINLIB_PCREQUIRES "cbc osi-clp ipopt")
+set(PACKAGE_VERSION      "${CBC_VERSION}")
+
+configure_file(${Bonmin_DIR}/bonmin.pc.in ${CMAKE_BINARY_DIR}/Bonmin/bonmin.pc @ONLY)
+
+set(libdir         "${Bonmin_DIR}")
+set(abs_source_dir "${CMAKE_BINARY_DIR}/bin")
+
+configure_file(${Bonmin_DIR}/bonmin-uninstalled.pc.in ${CMAKE_BINARY_DIR}/Bonmin/bonmin-uninstalled.pc @ONLY)
+
+set(BONMINAMPLINTERFACELIB_PCLIBS "")
+set(BONMINAMPLINTERFACELIB_PCREQUIRES "asl cbc osi ipopt")
+
+install(FILES ${CMAKE_BINARY_DIR}/Bonmin/bonmin.pc
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkg-config/)
+
+configure_file(${Bonmin_DIR}/src/CbcBonmin/bonminamplinterface.pc.in ${CMAKE_BINARY_DIR}/Bonmin/bonminamplinterface.pc @ONLY)
+configure_file(${Bonmin_DIR}/src/CbcBonmin/bonminamplinterface-uninstalled.pc.in ${CMAKE_BINARY_DIR}/Bonmin/bonminamplinterface-uninstalled.pc @ONLY)
+
+install(FILES ${CMAKE_BINARY_DIR}/Bonmin/bonminamplinterface.pc
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkg-config/)
+
+#
+# Build
+#
 
 include_directories(${Bonmin_DIR}/src/Interfaces/)
 include_directories(${Bonmin_DIR}/src/Interfaces/Filter/)
@@ -61,7 +94,6 @@ include_directories(${Ipopt_DIR}/src/Interfaces)
 include_directories(${Ipopt_DIR}/src/Common)
 include_directories(${Ipopt_DIR}/src/LinAlg)
 include_directories(${Ipopt_DIR}/src/LinAlg/TMatrices)
-
 include_directories(${CMAKE_BINARY_DIR}/Ipopt/include)
 
 set(Bonmin_SRC_LIST ${Bonmin_DIR}/src/Interfaces/BonTNLPSolver.cpp
@@ -79,6 +111,7 @@ set(Bonmin_SRC_LIST ${Bonmin_DIR}/src/Interfaces/BonTNLPSolver.cpp
                     ${Bonmin_DIR}/src/Interfaces/BonTMINLP2TNLP.cpp
                     ${Bonmin_DIR}/src/Interfaces/BonTNLP2FPNLP.cpp
                     ${Bonmin_DIR}/src/Interfaces/BonCutStrengthener.cpp
+                    #${Bonmin_DIR}/src/Interfaces/BonCurvatureEstimator.cpp
                     ${Bonmin_DIR}/src/Interfaces/BonAuxInfos.cpp
                     ${Bonmin_DIR}/src/Interfaces/BonStrongBranchingSolver.cpp
                     ${Bonmin_DIR}/src/Interfaces/BonBranchingTQP.cpp
@@ -156,13 +189,11 @@ set(Bonmin_SRC_LIST_Headers ${Bonmin_DIR}/src/Interfaces/BonCutStrengthener.hpp
                             ${Bonmin_DIR}/src/Interfaces/BonStartPointReader.hpp
                             ${Bonmin_DIR}/src/Interfaces/config_default.h
                             ${Bonmin_DIR}/src/Interfaces/config_bonmin_default.h
-                            ${Bonmin_DIR}/src/Interfaces/BonStdInterfaceTMINLP.hpp
                             ${Bonmin_DIR}/src/Interfaces/BonminConfig.h
                             ${Bonmin_DIR}/src/Interfaces/BonOsiTMINLPInterface.hpp
                             ${Bonmin_DIR}/src/Interfaces/BonColReader.hpp
                             ${Bonmin_DIR}/src/Interfaces/BonBoundsReader.hpp
                             ${Bonmin_DIR}/src/Interfaces/BonAuxInfos.hpp
-                            ${Bonmin_DIR}/src/Interfaces/BonStdCInterface.h
                             ${Bonmin_DIR}/src/Interfaces/BonBranchingTQP.hpp
                             ${Bonmin_DIR}/src/Interfaces/BonStrongBranchingSolver.hpp
                             ${Bonmin_DIR}/src/Interfaces/BonMsgUtils.hpp
@@ -467,17 +498,19 @@ if (BONMIN_BUILD_EXAMPLES)
 endif ()
 
 install(TARGETS bonmin
-        DESTINATION bin)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
 
 install(TARGETS libBonmin 
-        DESTINATION lib)
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/static)
 
 install(FILES ${Bonmin_SRC_LIST_Headers} 
-        DESTINATION include/coin)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin)
 
 install(FILES ${CMAKE_BINARY_DIR}/Bonmin/include/config_bonmin.h
-        DESTINATION include/coin
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin
         RENAME BonminConfig.h)
 
 install(FILES ${CMAKE_BINARY_DIR}/Bonmin/include/config_bonmin.h
-        DESTINATION include/coin)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin)
